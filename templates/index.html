@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tracker Map</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      html, body, #map { height: 100%; margin: 0; }
+      .label { font: 12px/1.2 "Inter", system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const initLat = {{ lat | tojson }};
+      const initLon = {{ lon | tojson }};
+      const initLabel = {{ label | tojson }};
+
+      const map = L.map('map').setView([initLat, initLon], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+      }).addTo(map);
+
+      const marker = L.marker([initLat, initLon]).addTo(map);
+      marker.bindPopup(`<div class="label">${initLabel}</div>`).openPopup();
+
+      let trail = null;
+
+      async function refresh(){
+        try{
+          const res = await fetch('/location');
+          const { lat, lon, label } = await res.json();
+          marker.setLatLng([lat, lon]);
+          marker.setPopupContent(`<div class="label">${label}</div>`);
+
+          if(trail === null){
+            if(label !== initLabel){
+              trail = L.polyline([[lat, lon]], { weight: 3 }).addTo(map);
+            }
+          }else{
+            trail.addLatLng([lat, lon]);
+          }
+
+          map.panTo([lat, lon], { animate: true });
+        } 
+        catch(e){
+          console.error(e);
+        }
+      }
+
+      // change point every 2 seconds
+      setInterval(refresh, 2000);
+    </script>
+  </body>
+</html>
