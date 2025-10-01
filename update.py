@@ -2,9 +2,10 @@ import requests
 import time
 
 port = 5000 # Ensure this matches the server port from terminal output of main.py
+delay_s = 5 # Small adjustable delay between multiple updates
 
 def update(lat = 0, lon = 0, label = "Tracker"):
-    time.sleep(5)
+    time.sleep(delay_s)
     url = f"http://127.0.0.1:{port}/add"
     payload = {
         "lat": lat,
